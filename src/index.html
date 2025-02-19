@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="icon" type="image/png" href="/assets/icon.png" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+
+    <meta charset="utf-8" />
+    <title>Faizan's Portfolio</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <body>
+    <canvas class="threejs"></canvas>
+    <div id="noteBox" class="note-box"></div>
+    <script type="module" src="./index.js"></script>
+    <div class="overlay"></div>
+    <h1 class="loading">
+      Loading Experience... <span id="progressPercentage">0</span>%
+    </h1>
+    <button class="start" id="startButton">
+      <span id="buttonText">0%</span>
+    </button>
+    <script>
+      let progress = 0;
+      const progressPercentage = document.getElementById("progressPercentage");
+      const startButton = document.getElementById("startButton");
+      const buttonText = document.getElementById("buttonText");
+      startButton.disabled = true; // Initially disable the button
+
+      function updateProgress() {
+        if (progress < 100) {
+          progress += 1;
+          progressPercentage.innerText = progress;
+          buttonText.innerText = `${progress}%`;
+          startButton.style.background = `conic-gradient(#ffffff ${
+            progress * 3.6
+          }deg, rgba(255,255,255,0.2) ${progress * 3.6}deg)`;
+          setTimeout(updateProgress, 20);
+        } else {
+          buttonText.innerText = "START";
+          startButton.classList.add("loaded");
+          startButton.disabled = false; // Enable the button when loading completes
+        }
+      }
+
+      updateProgress();
+    </script>
+
+    <div id="myModal" class="modal">
+      <div class="modal-wrapper">
+        <div class="modal-content">
+          <h1 id="modalTitle">Modal Title</h1>
+          <p id="modalDescription">Modal Description</p>
+        </div>
+        <span class="close">Close</span>
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const noteBox = document.getElementById("noteBox");
+        const lines = [
+          "Welcome to Muhammad Faizan's Portfolio...!",
+          "You're an Avatar 🚶‍♂️ Now...",
+          "Use Arrow Keys ⌨️ to Move...",
+          "Move Towards the Section you Wanna Explore 🌐...",
+          "Click Anywhere on Screen to Enable Rotate Mode 🔄...",
+          "Then click ESC Key to Move Out from Rotate Mode or Show Cursor...",
+        ];
+
+        let currentLine = 0;
+        let currentChar = 0;
+        let textCompleted = false; // Flag to track when typing is finished
+        let hideTimeout;
+
+        function showLetterByLetter() {
+          if (currentLine < lines.length) {
+            if (currentChar < lines[currentLine].length) {
+              noteBox.innerHTML += lines[currentLine][currentChar];
+              currentChar++;
+              setTimeout(showLetterByLetter, 30); // Typing speed
+            } else {
+              noteBox.innerHTML += "<br>"; // Move to next line
+              currentLine++;
+              currentChar = 0;
+              setTimeout(showLetterByLetter, 30); // Small delay before next line
+            }
+          } else {
+            textCompleted = true; // Mark as completed when all text is displayed
+          }
+        }
+
+        // Show note box after loading completes
+        setTimeout(() => {
+          noteBox.style.display = "block";
+          setTimeout(() => {
+            noteBox.style.opacity = "1";
+            showLetterByLetter();
+          }, 500);
+        }, 2200); // Delay before note appears (after progress bar)
+
+        // Hide note box 3 seconds after user presses a key (but only after text is completed)
+        function hideNoteBox() {
+          if (textCompleted) {
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+              noteBox.style.opacity = "0";
+              setTimeout(() => {
+                noteBox.style.display = "none"; // Completely remove it after fade-out
+              }, 500);
+            }, 500); // 3-second delay before disappearing
+          }
+        }
+
+        document.addEventListener("keydown", hideNoteBox);
+      });
+    </script>
+  </body>
+</html>
