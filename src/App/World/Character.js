@@ -13,26 +13,6 @@ export default class Character {
     this.instantiateCharacter();
   }
 
-  // instantiateCharacter() {
-  //   // create character and add to scene
-  //   const geometry = new THREE.BoxGeometry(.6, 2, .6);
-  //   const material = new THREE.MeshStandardMaterial({
-  //     color: 0x00ff00,
-  //     wireframe: true,
-  //     visible: false,
-  //   });
-  //   this.instance = new THREE.Mesh(geometry, material);
-  //   this.instance.position.set(0, 4, 0);
-  //   this.scene.add(this.instance);
-
-  //   // add avatar to character
-  //   const avatar = this.avatar.scene
-  //   avatar.rotation.y = Math.PI
-  //   avatar.position.y = -1
-  //   avatar.scale.set(3, 3, 3);
-  //   this.instance.add(avatar)
-  // }
-
   instantiateCharacter() {
     // Create character and add to scene
     const geometry = new THREE.BoxGeometry(.6, 2, .6);
