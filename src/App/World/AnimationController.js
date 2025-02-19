@@ -1,59 +1,61 @@
-import * as THREE from 'three';
-
-import App from '../App';
-import { inputStore } from '../Utils/Store';
-
 export default class AnimationController {
     constructor() {
+        this.app = null;
+        this.mixer = null;
+        this.animations = new Map();
+        this.currentAction = null;
+
+        this.loadThreeJS();
+    }
+
+    async loadThreeJS() {
+        const THREE = await import('three'); // ✅ Lazy-load THREE.js
+        const { default: App } = await import('../App');
+        const { inputStore } = await import('../Utils/Store');
+
+        this.THREE = THREE;
         this.app = new App();
         this.scene = this.app.scene;
         this.avatar = this.app.world.character.avatar;
 
-        inputStore.subscribe((input) => this.onInput(input))
+        inputStore.subscribe((input) => this.onInput(input));
 
-        this.instantiatedAnimations()
+        this.instantiatedAnimations();
     }
 
     instantiatedAnimations() {
-        const idle = this.avatar.animations[0]
-        this.mixer = new THREE.AnimationMixer(this.avatar.scene)
+        if (!this.avatar || !this.THREE) return; // ✅ Ensure assets are loaded
 
+        this.mixer = new this.THREE.AnimationMixer(this.avatar.scene);
 
-        this.animations = new Map()
         this.avatar.animations.forEach((clip) => {
-            this.animations.set(clip.name, this.mixer.clipAction(clip))
-        })
+            this.animations.set(clip.name, this.mixer.clipAction(clip));
+        });
 
-        this.currentAction = this.animations.get('Idle')
-        this.currentAction.play()
+        this.currentAction = this.animations.get('Idle');
+        if (this.currentAction) this.currentAction.play();
     }
 
     playAnimation(name) {
-        if (this.currentAction === this.animations.get(name)) return
-        const action = this.animations.get(name)
-        action.reset()
-        action.play()
-        action.crossFadeFrom(this.currentAction, 0.2)
+        if (!this.animations.has(name) || this.currentAction === this.animations.get(name)) return;
 
-        this.currentAction = action
+        const action = this.animations.get(name);
+        action.reset();
+        action.play();
+        action.crossFadeFrom(this.currentAction, 0.2);
+
+        this.currentAction = action;
     }
 
     onInput(input) {
-        if(
-            input.forward ||
-            input.backward ||
-            input.left ||
-            input.right
-        ) {
-            this.playAnimation('Run')
+        if (input.forward || input.backward || input.left || input.right) {
+            this.playAnimation('Run');
         } else {
-            this.playAnimation('Idle')
-
+            this.playAnimation('Idle');
         }
     }
 
     loop(deltaTime) {
-        this.mixer.update(deltaTime)
-    } 
-
+        if (this.mixer) this.mixer.update(deltaTime);
+    }
 }
