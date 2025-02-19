@@ -1,19 +1,13 @@
+import * as THREE from 'three';
+import { sizesStore } from './Utils/Store.js';
+import App from './App.js';
+
 export default class Camera {
     constructor() {
-        this.app = null; // Initialize app as null
-        this.loadThreeJS();
-    }
-
-    async loadThreeJS() {
-        const THREE = await import('three'); // Lazy-load THREE.js
-        const { sizesStore } = await import('./Utils/Store.js');
-        const { default: App } = await import('./App.js');
-
-        this.app = new App(); // Now assign App after it's imported
+        this.app = new App();
         this.canvas = this.app.canvas;
         this.sizesStore = sizesStore;
         this.sizes = this.sizesStore.getState();
-        this.THREE = THREE;
 
         this.setInstance();
         this.setMouseControls();
@@ -21,20 +15,22 @@ export default class Camera {
     }
 
     setInstance() {
-        if (!this.THREE) return; // Ensure THREE is loaded
-        this.instance = new this.THREE.PerspectiveCamera(
-            75, 
+        this.instance = new THREE.PerspectiveCamera(
+            75, // Wider FOV for first-person
             this.sizes.width / this.sizes.height,
             0.1,
             600
         );
 
-        this.euler = new this.THREE.Euler(0, 0, 0, 'YXZ');
-        this.sensitivity = 0.002;
+        this.euler = new THREE.Euler(0, 0, 0, 'YXZ'); // Order: Yaw (Y) then Pitch (X)
+        this.sensitivity = 0.002; // Mouse sensitivity
     }
 
     setMouseControls() {
-        this.canvas?.addEventListener('click', () => {
+        this.canvas.requestPointerLock = this.canvas.requestPointerLock || this.canvas.mozRequestPointerLock;
+        document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+
+        this.canvas.addEventListener('click', () => {
             this.canvas.requestPointerLock();
         });
 
@@ -42,7 +38,7 @@ export default class Camera {
             if (document.pointerLockElement === this.canvas) {
                 this.euler.y -= event.movementX * this.sensitivity;
                 this.euler.x -= event.movementY * this.sensitivity;
-                this.euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.euler.x));
+                this.euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.euler.x)); // Limit pitch
                 this.instance.quaternion.setFromEuler(this.euler);
             }
         });
@@ -50,27 +46,22 @@ export default class Camera {
 
     setResizeListener() {
         this.sizesStore.subscribe((sizes) => {
-            if (this.instance) {
-                this.instance.aspect = sizes.width / sizes.height;
-                this.instance.updateProjectionMatrix();
-            }
+            this.instance.aspect = sizes.width / sizes.height;
+            this.instance.updateProjectionMatrix();
         });
     }
 
     loop() {
-        // ✅ Check if `this.app` and `this.app.world` are loaded before using them
-        if (!this.app || !this.app.world || !this.app.world.characterController) return;
-
-        const characterController = this.app.world.characterController.rigidBody;
-        if (characterController) {
-            const characterPosition = characterController.translation();
-            if (characterPosition) {
-                this.instance.position.set(
-                    characterPosition.x, 
-                    characterPosition.y + 7, 
-                    characterPosition.z - 1
-                );
-            }
+        this.characterController = this.app.world.characterController?.rigidBody;
+        if (this.characterController) {
+            const characterPosition = this.characterController.translation();
+            
+            // Set camera position at character's head height (Y + 1.8)
+            this.instance.position.set(
+                characterPosition.x, 
+                characterPosition.y + 7, 
+                characterPosition.z - 1
+            );
         }
     }
 }
